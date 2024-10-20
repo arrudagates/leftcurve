@@ -6,9 +6,16 @@ import 'dotenv/config';
 import { useLogin, usePrivy } from "@privy-io/react-auth";
 import { useState, useEffect } from "react";
 
+type TOKEN = { name: string; id: string; decimals: number; symbol: string; totalValueLocked: number; volume: number; };
+
+const AMOUNT_TO_APE = 100000000000000;
+const AMOUNT_FOR_FEES = 100000000000000;
+
 export default function Home() {
   const [selectedChain, setSelectedChain] = useState("ethereum");
   const [balance, setBalance] = useState<string | null>(null);
+  const [tokens, setTokens] = useState<TOKEN[]>([]);
+  const [aiTokens, setAITokens] = useState<[string, string, string] | null>(null);
 
   // Define the function to be called on button click
   const handleClick = async (path: string) => {
@@ -31,11 +38,66 @@ export default function Home() {
     const response = await fetch(`/api/getBalance?address=${address}&network=${network}`);
     const data = await response.json();
     console.log(JSON.stringify(data))
-    alert(JSON.stringify(data));
-
     return data.balance;
 
   };
+
+  const getTokens = async (network: string): Promise<TOKEN[]> => {
+    const response = await fetch(`/api/getTokens?network=${network}`);
+    const data = await response.json();
+    console.log(JSON.stringify(data))
+    return data;
+  };
+
+  const fetchTokens = async () => {
+    const tokens = await getTokens(selectedChain);
+
+    setTokens(tokens);
+  };
+
+  const getAITokens = async (tokens: TOKEN[]): Promise<[string, string, string]> => {
+    const mapped = tokens.map(({ name }) => name);
+
+    const response = await fetch(`/api/aiProcess`, {
+      method: "POST",
+      body: JSON.stringify(mapped)
+    });
+
+    const data = await response.json();
+
+    console.log(JSON.stringify(data));
+
+    return data.tokens;
+
+  };
+
+  const doAIProcess = async () => {
+    const aiTokens = await getAITokens(tokens);
+
+    setAITokens(aiTokens);
+  };
+
+  const fetchTokensAndAIProcess = async () => {
+    const fetchedTokens = await getTokens(selectedChain);
+
+    const aiTokens = await getAITokens(fetchedTokens);
+
+    setAITokens(aiTokens);
+
+  }
+
+  const buyTokens = async () => {
+    if (!aiTokens) return;
+
+    const tokensToBuy = aiTokens.map((t) => {
+      const maybeFound = tokens.find(({ name }) => t === name);
+      if (!maybeFound) throw "Something went wrong...";
+
+      return maybeFound;
+    });
+
+
+  }
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -58,99 +120,41 @@ export default function Home() {
 
   return (
     <div className={styles.page}>
-      <button
-        className="bg-violet-600 hover:bg-violet-700 py-3 px-6 text-white rounded-lg"
-        onClick={login}
-      >Login</button>
-
-      <select
-        value={selectedChain}
-        onChange={handleChainChange}
-        className="mt-4 p-2 rounded-lg border border-gray-300"
-      >
-        <option value="ethereum">Ethereum</option>
-        <option value="base">Base</option>
-      </select>
-
-      <div className="mt-4 p-2 rounded-lg border border-gray-300">
-        Balance: {balance !== null ? balance : 'Loading...'}
-      </div>
-
       <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Generate a Remote Attestation.
-          </li>
-          <li>Derive a Key.</li>
-          <li>Get Last Block.</li>
-        </ol>
+        <button
+          className="bg-violet-600 hover:bg-violet-700 py-3 px-6 text-white rounded-lg"
+          onClick={login}
+        >Login</button>
 
-        <div className={styles.ctas}>
-          <a className={styles.primary} target="_blank"
-            rel="noopener noreferrer" onClick={() => handleClick('/api/remoteAttestation')}>
-            Remote Attestation
-          </a>
-          <a className={styles.secondary} target="_blank"
-            rel="noopener noreferrer" onClick={() => handleClick('/api/deriveKey')}>
-            Derive Key
-          </a>
-          <a className={styles.primary} target="_blank"
-            rel="noopener noreferrer" onClick={() => handleClick('/api/getLastBlock')}>
-            Last Block
-          </a>
+        <select
+          value={selectedChain}
+          onChange={handleChainChange}
+          className="mt-4 p-2 rounded-lg border border-gray-300"
+        >
+          <option value="unichain">Unichain</option>
+          <option value="base">Base</option>
+        </select>
+
+        <div className="mt-4 p-2 rounded-lg border border-gray-300">
+          Balance: {balance !== null ? balance : 'Loading...'}
         </div>
+
+        <button
+          className="bg-violet-600 hover:bg-violet-700 py-3 px-6 text-white rounded-lg"
+          onClick={fetchTokensAndAIProcess}
+        >Get tokens</button>
+
+        <button
+          className="bg-violet-600 hover:bg-violet-700 py-3 px-6 text-white rounded-lg"
+          onClick={buyTokens}
+        >Buy</button>
+
+        <div className="mt-4 p-2 rounded-lg border border-gray-300">
+          Your new memecoins: {aiTokens !== null ? `${aiTokens[0]}, ${aiTokens[1]}, ${aiTokens[2]}` : 'Loading...'}
+        </div>
+
       </main>
       <footer className={styles.footer}>
-        <a
-          href="https://bit.ly/dstack-cheat-sheet"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://docs.phala.network/references/hackathon-guides/ethglobal-sf-hackathon-guide"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Guide
-        </a>
-        <a
-          href="https://github.com/Phala-Network/nextjs-viem-dstack-template"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to Code →
-        </a>
       </footer>
     </div>
   );

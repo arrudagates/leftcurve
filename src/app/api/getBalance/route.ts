@@ -1,5 +1,5 @@
 import { http, createPublicClient, stringify } from 'viem'
-import { sepolia, baseSepolia } from 'viem/chains'
+import { baseSepolia, unichainSepolia } from 'viem/chains'
 import superjson from 'superjson'
 import { NextRequest } from 'next/server';
 
@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
     console.log(searchParams)
 
     const client = createPublicClient({
-        chain: network === "ethereum" ? sepolia : baseSepolia,
+        chain: network === "unichain" ? unichainSepolia : baseSepolia,
+        cacheTime: 0,
         transport: http(),
     })
 
@@ -24,6 +25,10 @@ export async function GET(request: NextRequest) {
     });
 
     console.log("balance: ", balance);
+
+    const blockNumber = await client.getBlockNumber()
+
+    console.log("block: ", blockNumber);
 
     return Response.json({ address: superjson.serialize(address).json, balance: superjson.serialize(balance).json });
 }
