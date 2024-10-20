@@ -1,0 +1,29 @@
+{
+  "name": "nextjs-viem-dstack-template",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@phala/dstack-sdk": "^0.1.4",
+    "@privy-io/react-auth": "^1.92.0",
+    "@solana/web3.js": "^1.95.4",
+    "dotenv": "^16.4.5",
+    "net": "^1.0.2",
+    "next": "14.2.15",
+    "react": "^18",
+    "react-dom": "^18",
+    "superjson": "^2.2.1",
+    "viem": "^2.21.26"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5"
+  }
+}
